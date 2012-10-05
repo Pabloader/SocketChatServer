@@ -4,11 +4,6 @@
  */
 package sockets;
 
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -17,58 +12,24 @@ import java.util.logging.Logger;
 public class SocketsServer
 {
 
-    private static BufferedReader br;
+    public static final int DEFAULT_PORT = 5001;
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
-        ServerSocket ss = new ServerSocket(5001);
-        br = new BufferedReader(new InputStreamReader(System.in));
-        while (true)
-        {
-            Socket s = ss.accept();
-            System.out.println("Connected...");
-            new SocketThread(s).start();
-            System.out.println("Started...");
-        }
-    }
-
-    private static class SocketThread extends Thread
-    {
-
-        private final Socket s;
-
-        public SocketThread(Socket s)
-        {
-            this.s = s;
-        }
-
-        @Override
-        public void run()
-        {
+        int port = DEFAULT_PORT;
+        if (args.length >= 1)
             try
             {
-                String command = null;
-                BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
-                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-                while (!"exit".equals(command))
-                {
-                    command = reader.readLine().trim().toLowerCase();
-                    System.out.println("Received '" + command + "' from client");
-
-                    bw.write(command + "\n");
-                    bw.flush();
-                }
-                reader.close();
-                bw.close();
-                System.out.println("Closed...");
+                port = Integer.parseInt(args[0]);
             }
-            catch (IOException ex)
+            catch (NumberFormatException numberFormatException)
             {
-                Logger.getLogger(SocketsServer.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }
+        ServerThread serverThread = new ServerThread(port);
+        serverThread.start();
+
     }
 }
