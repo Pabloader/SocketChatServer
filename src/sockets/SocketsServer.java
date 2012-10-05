@@ -4,18 +4,21 @@
  */
 package sockets;
 
-
 /**
+ * Класс, содержащий метод main
  *
- * @author s160820
+ * @author P@bloid
  */
 public class SocketsServer
 {
 
+    /**
+     * Стандартный порт для подключения, если он не указан явно
+     */
     public static final int DEFAULT_PORT = 5001;
 
     /**
-     * @param args the command line arguments
+     * @param args аргументы командной строки
      */
     public static void main(String[] args)
     {

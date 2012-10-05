@@ -10,12 +10,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Класс клиентского потока. Этот класс запускается для каждого подключившегося
+ * клиента.
  *
  * @author P@bloid
  */
-class ClientThread extends Thread {
+class ClientThread extends Thread
+{
+
+    /**
+     * Клиентский сокет
+     */
     private final Socket s;
 
+    /**
+     * Создает новый поток для клиента, подключенного через s
+     *
+     * @param s Клиентский сокет
+     */
     public ClientThread(Socket s)
     {
         this.s = s;
@@ -45,5 +57,4 @@ class ClientThread extends Thread {
             Logger.getLogger(SocketsServer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
 }
