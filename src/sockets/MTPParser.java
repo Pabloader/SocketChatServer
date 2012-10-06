@@ -36,11 +36,11 @@ public class MTPParser extends DefaultHandler
         switch (qName.toLowerCase())
         {
             case "iamnew":
-                String name = attributes.getValue("name");
+                String name = attributes.getValue("Name");
                 listener.clientConnected(name);
                 break;
             case "messageto":
-                String idStr = attributes.getValue("id");
+                String idStr = attributes.getValue("Id");
                 messageToId = Integer.parseInt(idStr);
                 break;
         }

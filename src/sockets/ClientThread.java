@@ -11,6 +11,8 @@ import java.io.OutputStreamWriter;
 import java.io.SequenceInputStream;
 import java.net.Socket;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
@@ -67,6 +69,10 @@ class ClientThread extends Thread implements MTPEventListener
      * Имя клиента, к которому подключен поток
      */
     private String clientName;
+    /**
+     * Id клиента, к которому подключен поток
+     */
+    private int clientId;
 
     /**
      * Создает новый поток для клиента, подключенного через s
@@ -102,17 +108,17 @@ class ClientThread extends Thread implements MTPEventListener
     {
         try
         {
-            //да простят меня боги программизьма за столь убогий костыль, но SAX-ом нормально по другому распарсить наш недо-XML не получается
-            SequenceInputStream sis = new SequenceInputStream(new ByteArrayInputStream("<root>".getBytes()), input);
-            parser.parse(sis, new MTPParser(this));
-            sis.close();
+            while (!s.isClosed())
+                try (SequenceInputStream sis = new SequenceInputStream(new ByteArrayInputStream("<root>".getBytes()), input))
+                {
+                    parser.parse(sis, new MTPParser(this));
+                }
+                catch (SAXException sax)
+                {
+                }
             input.close();
             output.close();
             System.out.println("Closed...");
-        }
-        catch (SAXException ex)
-        {
-            Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
         }
         catch (IOException ex)
         {
@@ -126,18 +132,19 @@ class ClientThread extends Thread implements MTPEventListener
     public void messageReceived(int id, String message)
     {
         System.out.println("Message received id=" + id + " message='" + message + "'");
-        byte[] data = String.format("<MessageFrom Id=\"%d\">%s</MessageFrom>", server.getClients().indexOf(this), message).getBytes();
+        byte[] data = String.format("<MessageFrom Id=\"%d\">%s</MessageFrom>", clientId, message).getBytes();
         String header = String.format("<Header Type=\"%d\" Size=\"%d\" />", TYPE_MESSAGEFROM, data.length);
         ClientThread client = server.getClients().get(id);
-        try
-        {
-            client.output.writeBytes(header);
-            client.output.write(data);
-        }
-        catch (IOException ex)
-        {
-            Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        if (client != null && !client.isClosed())
+            try
+            {
+                client.output.writeBytes(header);
+                client.output.write(data);
+            }
+            catch (IOException ex)
+            {
+                Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
     }
 
     /**
@@ -149,11 +156,13 @@ class ClientThread extends Thread implements MTPEventListener
         System.out.println("Client connected name=" + clientName);
         this.clientName = clientName;
         StringBuilder sb = new StringBuilder("<List>");
-        List<ClientThread> clients = server.getClients();
-        for (int i = 0; i < clients.size(); i++)
+        Map<Integer, ClientThread> clients = server.getClients();
+        for (Entry<Integer, ClientThread> entry : clients.entrySet())
         {
-            ClientThread client = clients.get(i);
-            sb.append("<Client Id=\"").append(i).append("\" Name=\"").append(client.clientName).append("\" IsI=\"").append(client == this).append("\" />");
+            int i = entry.getKey();
+            ClientThread client = entry.getValue();
+            if (client != null && !client.isClosed() && client.clientName != null)
+                sb.append("<Client Id=\"").append(i).append("\" Name=\"").append(client.clientName).append("\" IsI=\"").append(client == this).append("\" />");
         }
         sb.append("</List>");
         byte[] data = sb.toString().getBytes();
@@ -165,7 +174,43 @@ class ClientThread extends Thread implements MTPEventListener
         }
         catch (IOException ex)
         {
-            Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
+            try
+            {
+                s.close();
+            }
+            catch (IOException ex1)
+            {
+            }
         }
+    }
+
+    /**
+     * Возвращает true, если поток закрыт
+     *
+     * @return true, если поток закрыт
+     */
+    private boolean isClosed()
+    {
+        return s.isClosed();
+    }
+
+    /**
+     * Получить id клиента
+     *
+     * @return id клиента
+     */
+    public int getClientId()
+    {
+        return clientId;
+    }
+
+    /**
+     * Установить ID клиента
+     *
+     * @param clientId Новый ID
+     */
+    public void setClientId(int clientId)
+    {
+        this.clientId = clientId;
     }
 }

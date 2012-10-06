@@ -32,7 +32,11 @@ class ServerThread extends Thread
     /**
      * Список подключенных клиентов
      */
-    private List<ClientThread> clients = new ArrayList<>();
+    private Map<Integer, ClientThread> clients = new HashMap<>();
+    /**
+     * номер первого свободного клиента
+     */
+    private int clientId = 0;
 
     /**
      * Содать новый серверный поток
@@ -58,9 +62,9 @@ class ServerThread extends Thread
             {
                 Socket s = ss.accept();
                 ClientThread ct = new ClientThread(s, this);
-                clients.add(ct);
+                ct.setClientId(clientId);
+                clients.put(clientId++, ct);
                 ct.start();
-
             }
             ss.close();
         }
@@ -69,13 +73,13 @@ class ServerThread extends Thread
             Logger.getLogger(ServerThread.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     public synchronized void stopServer()
     {
         this.running = false;
     }
-
-    public List<ClientThread> getClients()
+    
+    public Map<Integer, ClientThread> getClients()
     {
         return clients;
     }
