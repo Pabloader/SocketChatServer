@@ -118,7 +118,7 @@ class ClientThread extends Thread implements MTPEventListener
                 }
             input.close();
             output.close();
-            System.out.println("Closed...");
+            System.out.println("Closed " + clientName + "...");
         }
         catch (IOException ex)
         {
@@ -131,7 +131,7 @@ class ClientThread extends Thread implements MTPEventListener
     @Override
     public void messageReceived(int id, String message)
     {
-        System.out.println("Message received id=" + id + " message='" + message + "'");
+        System.out.println("Message received from " + clientId + " to " + id + " message='" + message + "'");
         byte[] data = String.format("<MessageFrom Id=\"%d\">%s</MessageFrom>", clientId, message).getBytes();
         String header = String.format("<Header Type=\"%d\" Size=\"%d\" />", TYPE_MESSAGEFROM, data.length);
         ClientThread client = server.getClients().get(id);
