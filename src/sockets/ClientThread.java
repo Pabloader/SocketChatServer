@@ -102,7 +102,7 @@ class ClientThread extends Thread implements MTPEventListener
             Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     @Override
     public void run()
     {
@@ -118,7 +118,8 @@ class ClientThread extends Thread implements MTPEventListener
                 }
             input.close();
             output.close();
-            System.out.println("Closed " + clientName + "...");
+            System.out.println("Closed " + clientId + " '" + clientName + "'...");
+            server.getClients().remove(clientId);
         }
         catch (IOException ex)
         {
